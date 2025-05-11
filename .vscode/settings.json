@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "globals.h": "c",
+        "main.c": "c",
+        "menu.h": "c",
+        "locale.h": "c",
+        "ui_interface.h": "c",
+        "integral.h": "c",
+        "parser.h": "c",
+        "ncurses.h": "c"
+    }
+}

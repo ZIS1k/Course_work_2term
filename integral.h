@@ -1,14 +1,14 @@
 #ifndef INTEGRAL_H
 #define INTEGRAL_H
 
-#define INPUT_VALUE(MESSAGE, FORMAT, VARIABLE, addCONDITION, ERR_MESSAGE) \
-    printf(MESSAGE); \
-    while (scanw(FORMAT, VARIABLE) != 1 || addCONDITION) { \
-        printf(ERR_MESSAGE); \
-        while (getchar() != '\n'); \
-    } \
-    while (getchar() != '\n');
+void file_input_integral();
 
-void keyboard_input_integral(void);
+void keyboard_input_integral();
+
+void Integration();
+
+double trapezoidal_integral(double, double, char*);
+
+int calculation_partitions(double, double);
 
 #endif

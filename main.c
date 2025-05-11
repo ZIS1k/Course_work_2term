@@ -1,4 +1,6 @@
 #include <locale.h>
+#include <ncurses.h>
+
 #include "globals.h"
 #include "ui_interface.h"
 

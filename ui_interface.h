@@ -11,7 +11,7 @@ typedef struct {
 #define MAIN_MENU_ITEM_COUNT 4
 #define INPUT_METHOD_MENU_ITEM_COUNT 2
 #define ESC 27
-#define ENTER 13
+#define ENTER 10
 
 void cursor_visibility(bool);
 

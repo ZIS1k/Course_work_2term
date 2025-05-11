@@ -1,5 +1,7 @@
 #include <ncurses.h>
 #include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "integral.h"
 #include "globals.h"
@@ -14,7 +16,7 @@ menu_item_t main_menu_item[MAIN_MENU_ITEM_COUNT] = {
 
 menu_item_t input_method_menu_item[MAIN_MENU_ITEM_COUNT] = {
     "Keyboard Input", keyboard_input_integral,
-    "Load from File", keyboard_input_integral // исправить на чтение файла
+    "Load from File", file_input_integral,
 };
 
 void cursor_visibility(bool ch) {
@@ -29,112 +31,103 @@ void initialization_ui(){
     cursor_visibility(false);
     init_pair(1, COLOR_RED, COLOR_WHITE); // 1 цвет в палитре - красные символы на белом фоне
     init_pair(2, COLOR_RED, COLOR_BLACK); // 2 цвет в палитре - красные символы на чёрном фоне
+    init_pair(3, COLOR_BLUE, COLOR_WHITE); // 3 цвет в палитре - синие символы на белом фоне
     attron(COLOR_PAIR(1) | A_BOLD); // включаем пресет 1 (для стандартизации)
 }
 
-void redraw_menu_selected_item(int y, char* item_name) {
-    move(1 + y, 0);
-    deleteln();
-    insdelln(1);
-    attrset(COLOR_PAIR(1) | A_BOLD);
-    printw(" -> %s\n", item_name);
-}
-
-void redraw_menu_item(int y, char* item_name) {
-    move(1 + y, 0);
-    deleteln();
-    insdelln(1);
-    attrset(COLOR_PAIR(2) | A_DIM);
-    printw("    %s\n", item_name);
-}
-
-void show_main_menu(){
-    insdelln(1);
-    move(1, 0);
-    int selected_point = 0;
-    for (int i = 0; i < MAIN_MENU_ITEM_COUNT; i++){
-        if (i == selected_point){
-            attrset(COLOR_PAIR(1) | A_BOLD);
-            printw(" -> %s\n", main_menu_item[i].item_name);
-        } else {
-            attrset(COLOR_PAIR(2) | A_DIM);
-            printw("    %s\n", main_menu_item[i].item_name);
-        }
-    }
-
+void show_input_method_menu() {
     int key;
+    int selected_point = 0;
+    int need_redraw = 1;
 
-    while(key!=ESC){
+    do {
+        if (need_redraw) {
+            clear();
+            // Отрисовка подменю
+            for (int i = 0; i < INPUT_METHOD_MENU_ITEM_COUNT; i++) {
+                if (i == selected_point) {
+                    attrset(COLOR_PAIR(1) | A_BOLD);
+                    printw(" -> %s\n", input_method_menu_item[i].item_name);
+                } else {
+                    attrset(COLOR_PAIR(2) | A_DIM);
+                    printw("    %s\n", input_method_menu_item[i].item_name);
+                }
+            }
+            refresh();
+            need_redraw = 0;
+        }
+
         key = getch();
 
-        switch (key)
-        {
-        case KEY_DOWN:
-            selected_point = selected_point != (MAIN_MENU_ITEM_COUNT - 1) ? ++selected_point : 0;
-            redraw_menu_item(1 + selected_point, main_menu_item[selected_point].item_name);
-            redraw_menu_selected_item(1 + selected_point, main_menu_item[selected_point].item_name);
-            break;
-        case KEY_UP:
-            selected_point = selected_point != 0 ? --selected_point : (MAIN_MENU_ITEM_COUNT - 1);
-            redraw_menu_selected_item(1 + selected_point, main_menu_item[selected_point].item_name);
-            redraw_menu_item(1 + selected_point, main_menu_item[selected_point].item_name);
-            break;
-        case ENTER:
-            clear();
-            main_menu_item[selected_point].handler();
-            break;
+        switch (key) {
+            case KEY_DOWN:
+            case KEY_UP:
+                selected_point ^= 1;
+                need_redraw = 1;
+                break;
+            case ENTER:
+                clear();
+                input_method_menu_item[selected_point].handler();
+                return;
+            case ESC:
+                return;
         }
-    refresh();
-    }
-    clear();
+    } while (key != ESC);
 }
 
-void show_input_method_menu(){
-    insdelln(1);
-    move(1, 0);
-    int selected_point = 0;
-    for (int i = 0; i < INPUT_METHOD_MENU_ITEM_COUNT; i++){
-        if (i == selected_point){
-            attrset(COLOR_PAIR(1) | A_BOLD);
-            printw(" -> %s\n", input_method_menu_item[i].item_name);
-        } else {
-            attrset(COLOR_PAIR(2) | A_DIM);
-            printw("    %s\n", input_method_menu_item[i].item_name);
-        }
-    }
-
+void show_main_menu() {
     int key;
+    int selected_point = 0;
+    int need_redraw = 1;
 
-    while(key!=ESC){
+    do {
+        if (need_redraw) {
+            clear();
+            // Отрисовка меню
+            for (int i = 0; i < MAIN_MENU_ITEM_COUNT; i++) {
+                if (i == selected_point) {
+                    attrset(COLOR_PAIR(1) | A_BOLD);
+                    printw(" -> %s\n", main_menu_item[i].item_name);
+                } else {
+                    attrset(COLOR_PAIR(2) | A_DIM);
+                    printw("    %s\n", main_menu_item[i].item_name);
+                }
+            }
+            refresh();
+            need_redraw = 0;
+        }
+
         key = getch();
 
-        switch (key)
-        {
-        case KEY_DOWN:
-            selected_point = selected_point != (INPUT_METHOD_MENU_ITEM_COUNT - 1) ? ++selected_point : 0;
-            redraw_menu_item(1 + selected_point, input_method_menu_item[selected_point].item_name);
-            redraw_menu_selected_item(1 + selected_point, input_method_menu_item[selected_point].item_name);
-            break;
-        case KEY_UP:
-            selected_point = selected_point != 0 ? --selected_point : (INPUT_METHOD_MENU_ITEM_COUNT - 1);
-            redraw_menu_selected_item(1 + selected_point, input_method_menu_item[selected_point].item_name);
-            redraw_menu_item(1 + selected_point, input_method_menu_item[selected_point].item_name);
-            break;
-        case ENTER:
-            clear();
-            input_method_menu_item[selected_point].handler();
-            break;
+        switch (key) {
+            case KEY_DOWN:
+                selected_point = (selected_point + 1) % MAIN_MENU_ITEM_COUNT;
+                need_redraw = 1;
+                break;
+            case KEY_UP:
+                selected_point = (selected_point - 1 + MAIN_MENU_ITEM_COUNT) % MAIN_MENU_ITEM_COUNT;
+                need_redraw = 1;
+                break;
+            case ENTER:
+                clear();
+                main_menu_item[selected_point].handler();
+                need_redraw = 1;  // Требуем перерисовку после возврата
+                break;
+            case ESC:
+                exit_program();
+                return;
         }
-    refresh();
-    }
-    clear();
+    } while (key != ESC);
 }
 
 void wait_to_continue(){
-    printw("Goodbye!\nPress any key to continue");
+    printw("Press any key to continue");
     keypad(stdscr, TRUE);
     cursor_visibility(FALSE);
+    refresh();
     getch();
+    clear();
+    refresh();
 }
 
 void exit_program() {
@@ -143,17 +136,28 @@ void exit_program() {
 }
 
 void show_integral(){
-    printw("╭──────────────────────────────────────────────────────────╮\n");
-    printw("│ Your integral: ∫[%.2f, %.2f] %12s dx │\n", lower_limit, upper_limit, expression);
-    printw("╰──────────────────────────────────────────────────────────╯\n");
+    printw("#==========================================================#\n");
+    printw("| Your integral: ,/'[%.2f, %.2f] %12s dx |\n", lower_limit, upper_limit, expression);
+    printw("#==========================================================#\n");
+    wait_to_continue();
 }
 
 void show_integration_result(){
-    // Integration();
-
-    printw("╭──────────────────────────────────────────────────────────╮\n");
-    printw("│ ∫[%.2f, %.2f] %12s dx = %.4f │\n", lower_limit, upper_limit, expression, result);
-    printw("╰──────────────────────────────────────────────────────────╯\n");
+    Integration();
+    if (strcmp(expression, "error") == 0) {
+        printw("ERROR!\n");
+        printw("There was an error decoding your expression!\n\n");
+        printw("Possible causes:\n");
+        printw(" - The integral was not set by the user from the beginning of the program\n");
+        printw(" - The entered expression lacks closing brackets\n");
+        printw(" - The entered expression contains an incorrect functions names\n\n");
+    } else {
+        printw("#==========================================================#\n");
+        printw("| ,/'[%.2f, %.2f] %12s dx = %.4f |\n", lower_limit, upper_limit, expression, result);
+        printw("#==========================================================#\n");
+    }
+    
+    wait_to_continue();
 }
 
 /*
