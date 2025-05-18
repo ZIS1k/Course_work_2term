@@ -10,7 +10,8 @@
 menu_item_t main_menu_item[MAIN_MENU_ITEM_COUNT] = {
     {"Integral Input", show_input_method_menu},
     {"Integral Output", show_integral},
-    {"Integration Result", show_integration_result},
+    {"Show Integration Result", show_integration_result},
+    {"Save Result", save_result_to_file},
     {"Exit", exit_program}
 };
 
@@ -111,7 +112,7 @@ void show_main_menu() {
             case ENTER:
                 clear();
                 main_menu_item[selected_point].handler();
-                need_redraw = 1;  // Требуем перерисовку после возврата
+                need_redraw = 1;
                 break;
             case ESC:
                 exit_program();

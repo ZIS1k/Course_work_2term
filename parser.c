@@ -7,7 +7,6 @@
 
 jmp_buf parse_error;
 
-// Obertka
 double parser(char** expr, double x) {
     if (expr == NULL || *expr == NULL || **expr == '\0') {
         *expr = "error";

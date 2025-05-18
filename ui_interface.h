@@ -8,7 +8,7 @@ typedef struct {
     event_handler_fn handler;
 } menu_item_t;
 
-#define MAIN_MENU_ITEM_COUNT 4
+#define MAIN_MENU_ITEM_COUNT 5
 #define INPUT_METHOD_MENU_ITEM_COUNT 2
 #define ESC 27
 #define ENTER 10
@@ -16,10 +16,6 @@ typedef struct {
 void cursor_visibility(bool);
 
 void initialization_ui();
-
-void redraw_menu_selected_item(int, char*);
-
-void redraw_menu_item(int, char*);
 
 void show_main_menu();
 

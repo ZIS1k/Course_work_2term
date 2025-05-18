@@ -37,7 +37,6 @@ void file_input_integral() {
         return;
     }
 
-    // Чтение данных из файла
     if (fgets(buffer, sizeof(buffer), fPtr) == NULL) {
         mvprintw(1, 0, "Error: Empty file!\n");
         fclose(fPtr);
@@ -73,7 +72,7 @@ void file_input_integral() {
 
     fclose(fPtr);
 
-    mvprintw(1, 0, "Data loaded successfully!\n");
+    mvprintw(2, 0, "Data loaded successfully!\n");
     clrtoeol();
     noecho();
     cursor_visibility(FALSE);
@@ -86,31 +85,39 @@ void keyboard_input_integral() {
     echo();
     attrset(COLOR_PAIR(3) | A_BOLD);
 
-    mvprintw(0, 0, "Enter a lower integration limit:");
-    clrtoeol();
-    refresh();
+    mvprintw(0, 0, "Enter a lower integration limit: ");
     while (scanw("%lf", &lower_limit) != 1) {
-        mvprintw(0, 0, "Incorrect lower integration limit, try again:");
+        // Очистка буфера до конца строки
+        int ch;
+        while ((ch = getch()) != '\n' && ch != EOF);
+        mvprintw(1, 0, "Error: Invalid input. Enter a number.");
         clrtoeol();
         refresh();
-        clear_input_buffer();
+        mvprintw(0, 0, "Enter a lower integration limit: ");
+        clrtoeol();
+        refresh();
     }
 
-    mvprintw(1, 0, "Enter the upper limit of integration:");
-    clrtoeol();
-    refresh();
-    while (scanw("%lf", &upper_limit) != 1 || lower_limit > upper_limit) {
-        mvprintw(1, 0, "Incorrect upper integration limit, try again:");
+    mvprintw(1, 0, "Enter the upper limit of integration: ");
+    while (scanw("%lf", &upper_limit) != 1) {
+        // Очистка буфера до конца строки
+        int ch;
+        while ((ch = getch()) != '\n' && ch != EOF);
+        mvprintw(2, 0, "Error: Invalid input. Enter a number.");
         clrtoeol();
         refresh();
-        clear_input_buffer();
+        mvprintw(1, 0, "Enter the upper limit of integration: ");
+        clrtoeol();
+        refresh();
     }
 
     mvprintw(2, 0, "Enter the integral: ");
     clrtoeol();
     refresh();
-    echo();
     getstr(expression);
+
+    move(3, 0);
+    clrtobot();
 
     noecho();
     cursor_visibility(FALSE);
@@ -146,4 +153,46 @@ int calculation_partitions(double a, double b) {
     res_n = (res_n > 100000) ? 100000 : res_n; //максимум разбиений
 
     return res_n;
+}
+
+void save_result_to_file() {
+    char path[MAXLINE];
+    FILE* fPtr;
+
+    keypad(stdscr, TRUE);
+    cursor_visibility(TRUE);
+    echo();
+    attrset(COLOR_PAIR(3) | A_BOLD);
+
+    mvprintw(0, 0, "Enter path to save file: ");
+    clrtoeol();
+    refresh();
+    getstr(path);
+
+    fPtr = fopen(path, "w+");
+    if (fPtr == NULL) {
+        mvprintw(1, 0, "Error: Cannot open file for writing!");
+        wait_to_continue();
+        return;
+    }
+    if (strcmp(expression, "error") != 0){
+        fprintf(fPtr, "Lower limit: %.2f\n", lower_limit);
+        fprintf(fPtr, "Upper limit: %.2f\n", upper_limit);
+        fprintf(fPtr, "Expression: %s\n", expression);
+        fprintf(fPtr, "Result: %.4f\n", result);
+    } else {
+        printw("ERROR!\n");
+        printw("The result was not written to the file, because there were problems with the expression!\n\n");
+        printw("Possible causes:\n");
+        printw(" - The integral was not set by the user from the beginning of the program\n");
+        printw(" - The entered expression lacks closing brackets\n");
+        printw(" - The entered expression contains an incorrect functions names\n\n");
+    }
+    
+    fclose(fPtr);
+
+    mvprintw(2, 0, "Result saved to: %s", path);
+    noecho();
+    cursor_visibility(FALSE);
+    wait_to_continue();
 }

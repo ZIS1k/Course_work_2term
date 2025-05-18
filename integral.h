@@ -11,4 +11,6 @@ double trapezoidal_integral(double, double, char*);
 
 int calculation_partitions(double, double);
 
+void save_result_to_file();
+
 #endif
