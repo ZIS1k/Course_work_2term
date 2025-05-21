@@ -14,7 +14,7 @@
                 "${fileDirname}/globals.c",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
-                "-lncurses",
+                "-lncursesw",
                 "-lm"
             ],
             "options": {

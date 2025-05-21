@@ -2,18 +2,18 @@
 #include <math.h>
 #include <ctype.h>
 #include <setjmp.h>
-
+#include <stdlib.h>
 #include "parser.h"
 
 jmp_buf parse_error;
 
 double parser(char** expr, double x) {
-    if (expr == NULL || *expr == NULL || **expr == '\0') {
+    if (!expr || !*expr || **expr == '\0') {
         *expr = "error";
         return 0.0;
     }
     if (setjmp(parse_error) == 0) {
-        return parsing_expression(expr, x);
+        return parse_additive(expr, x);
     } else {
         *expr = "error";
         return 0.0;
@@ -21,138 +21,123 @@ double parser(char** expr, double x) {
 }
 
 void skipping_spaces(char** expr) {
-    while (isspace((unsigned char)**expr)) {
-        (*expr)++;
-    }
+    while (**expr && isspace((unsigned char)**expr)) (*expr)++;
 }
 
-double parsing_expression(char** expr, double x) {
+double parse_additive(char** expr, double x) {
+    double value = parse_multiplicative(expr, x);
     skipping_spaces(expr);
-
-    if (**expr == '(') {
-        double result = parse_parentheses(expr, x);
+    while (**expr == '+' || **expr == '-') {
+        char op = **expr;
+        (*expr)++;
         skipping_spaces(expr);
-        return result;
+        double rhs = parse_multiplicative(expr, x);
+        if (op == '+') value += rhs;
+        else value -= rhs;
+        skipping_spaces(expr);
+    }
+    return value;
+}
+
+double parse_multiplicative(char** expr, double x) {
+    double value = parse_parentheses(expr, x);
+    skipping_spaces(expr);
+    while (**expr == '*' || **expr == '/') {
+        char op = **expr;
+        (*expr)++;
+        skipping_spaces(expr);
+        double rhs = parse_parentheses(expr, x);
+        if (op == '*') value *= rhs;
+        else if (rhs != 0.0) value /= rhs;
+        else longjmp(parse_error, 1);
+        skipping_spaces(expr);
+    }
+    return value;
+}
+
+double parse_parentheses(char** expr, double x) {
+    skipping_spaces(expr);
+    if (**expr == '(') {
+        (*expr)++;
+        skipping_spaces(expr);
+        double value = parse_additive(expr, x);
+        skipping_spaces(expr);
+        if (**expr == ')') {
+            (*expr)++;
+            skipping_spaces(expr);
+            return value;
+        }
+        longjmp(parse_error, 1);
     }
 
     if (**expr == 'x') {
         (*expr)++;
+        skipping_spaces(expr);
         return x;
     }
 
-    if (isdigit(**expr) || **expr == '.'){
-        return parsing_number(expr);
+    if (isalpha((unsigned char)**expr)) {
+        return parse_function(expr, x);
     }
 
-    if (isalpha(**expr)){
-        return parse_trigonometric(expr, x);
-    }
-
-    return parse_additive(expr, x);
-}
-
-double parse_parentheses(char** expr, double x) {
-    (*expr)++; // Пропуск '('
-    skipping_spaces(expr);
-    double result = parsing_expression(expr, x);
-    skipping_spaces(expr);
-    if (**expr != ')') {
-        longjmp(parse_error, 1);
-    }
-    (*expr)++;
-    return result;
+    return parsing_number(expr);
 }
 
 double parsing_number(char** expr) {
-    double generated_number = 0;
-
-    while (**expr != '\0' && **expr != '.' && **expr != ',' && isdigit(**expr)) {
-        generated_number = generated_number * 10 + (**expr - '0');
-        (*expr)++;
+    char* end;
+    double value = strtod(*expr, &end);
+    if (end == *expr) {
+        longjmp(parse_error, 1);
     }
-
-    if (**expr == '.' || **expr == ',') {
-        (*expr)++;
-        double fraction = 1;
-        while (**expr != '\0' && isdigit(**expr)) {
-            fraction /= 10;
-            generated_number += ((**expr) - '0') * fraction;
-            (*expr)++;
-        }
-    }
-    return generated_number;
+    *expr = end;
+    skipping_spaces(expr);
+    return value;
 }
 
-double parse_additive(char** expr, double x) {
-    skipping_spaces(expr);
-    double result = parse_multiplicative(expr, x);
-    skipping_spaces(expr);
-    
 
-    while(**expr == '+' || **expr == '-') {
-        char operation = **expr;
-        (*expr)++;
-        double term = parse_multiplicative(expr, x);
-        if (operation == '+'){
-            result += term;
-        } else {
-            result -= term;
-        }
-        skipping_spaces(expr);
-    }
-    return result;
-}
-
-double parse_multiplicative(char** expr, double x){
-    double result = parsing_expression(expr, x);
-    skipping_spaces(expr);
-    
-
-    while(**expr == '*' || **expr == '/') {
-        char operation = **expr;
-        (*expr)++;
-        double factor = parsing_expression(expr, x);
-        if (operation == '*'){
-            result *= factor;
-        } else {
-            result /= factor;
-        }
-        skipping_spaces(expr);
-    }
-    return result;
-}
-
-double parse_trigonometric(char** expr, double x) {
+double parse_function(char** expr, double x) {
     skipping_spaces(expr);
     if (strncmp(*expr, "sin", 3) == 0) {
         (*expr) += 3;
         skipping_spaces(expr);
-        double arg = parsing_expression(expr, x);
+        double arg = parse_additive(expr, x);
         skipping_spaces(expr);
         return sin(arg);
     }
-    else if (strncmp(*expr, "cos", 3) == 0) {
+    
+    if (strncmp(*expr, "cos", 3) == 0) {
         (*expr) += 3;
         skipping_spaces(expr);
-        double arg = parsing_expression(expr, x);
+        double arg = parse_additive(expr, x);
         skipping_spaces(expr);
         return cos(arg);
     }
-    else if (strncmp(*expr, "tan", 3) == 0) {
+    
+    if (strncmp(*expr, "tan", 3) == 0) {
         (*expr) += 3;
         skipping_spaces(expr);
-        double arg = parsing_expression(expr, x);
+        double arg = parse_additive(expr, x);
         skipping_spaces(expr);
         return tan(arg);
     }
-    else if (strncmp(*expr, "ctan", 4) == 0) {
+
+    if (strncmp(*expr, "ctan", 4) == 0) {
         (*expr) += 4;
         skipping_spaces(expr);
-        double arg = parsing_expression(expr, x);
+        double arg = parse_additive(expr, x);
         skipping_spaces(expr);
         return ( 1 / tan(arg) );
     }
-    else {
-        longjmp(parse_error, 1);
+
+    if (strncmp(*expr, "log", 3) == 0) {
+        (*expr) += 3;
+        skipping_spaces(expr);
+        double arg = parse_additive(expr, x);
+        skipping_spaces(expr);
+        return log(arg);
     }
+
+    longjmp(parse_error, 1);
+    return 0.0;
+        
 }

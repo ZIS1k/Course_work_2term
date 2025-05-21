@@ -24,21 +24,21 @@ void file_input_integral() {
     keypad(stdscr, TRUE);
     cursor_visibility(TRUE);
     echo();
-    attrset(COLOR_PAIR(3) | A_BOLD);
+    attrset(COLOR_PAIR(2) | A_BOLD);
 
-    mvprintw(0, 0, "Enter path to file: ");
+    mvprintw(0, 0, "Введите путь к файлу: ");
     clrtoeol();
     refresh();
     getstr(path);
 
     if ((fPtr = fopen(path, "r")) == NULL) {
-        mvprintw(1, 0, "Error: File not found!\n");
+        mvprintw(1, 0, "Ошибка: Файл не найден!\n");
         wait_to_continue();
         return;
     }
 
     if (fgets(buffer, sizeof(buffer), fPtr) == NULL) {
-        mvprintw(1, 0, "Error: Empty file!\n");
+        mvprintw(1, 0, "Ошибка: Пустой файл!\n");
         fclose(fPtr);
         wait_to_continue();
         return;
@@ -46,7 +46,7 @@ void file_input_integral() {
 
     token = strtok(buffer, ";");
     if (token == NULL || sscanf(token, "%lf", &lower_limit) != 1) {
-        mvprintw(1, 0, "Error: Invalid lower limit!\n");
+        mvprintw(1, 0, "Ошибка: Некорректный нижний предел!\n");
         fclose(fPtr);
         wait_to_continue();
         return;
@@ -54,7 +54,7 @@ void file_input_integral() {
 
     token = strtok(NULL, ";");
     if (token == NULL || sscanf(token, "%lf", &upper_limit) != 1) {
-        mvprintw(1, 0, "Error: Invalid upper limit!\n");
+        mvprintw(1, 0, "Ошибка: Некорректный верхний предел!\n");
         fclose(fPtr);
         wait_to_continue();
         return;
@@ -62,7 +62,7 @@ void file_input_integral() {
 
     token = strtok(NULL, ";");
     if (token == NULL || strlen(token) >= sizeof(expression)) {
-        mvprintw(1, 0, "Error: Invalid expression!\n");
+        mvprintw(1, 0, "Ошибка: Некорректное выражение!\n");
         fclose(fPtr);
         wait_to_continue();
         return;
@@ -72,7 +72,7 @@ void file_input_integral() {
 
     fclose(fPtr);
 
-    mvprintw(2, 0, "Data loaded successfully!\n");
+    mvprintw(2, 0, "Загрузка данных прошла успешно!!\n");
     clrtoeol();
     noecho();
     cursor_visibility(FALSE);
@@ -83,35 +83,35 @@ void keyboard_input_integral() {
     keypad(stdscr, TRUE);
     cursor_visibility(TRUE);
     echo();
-    attrset(COLOR_PAIR(3) | A_BOLD);
+    attrset(COLOR_PAIR(2) | A_BOLD);
 
-    mvprintw(0, 0, "Enter a lower integration limit: ");
+    mvprintw(0, 0, "Введите нижный придел интегрирования: ");
     while (scanw("%lf", &lower_limit) != 1) {
         // Очистка буфера до конца строки
         int ch;
         while ((ch = getch()) != '\n' && ch != EOF);
-        mvprintw(1, 0, "Error: Invalid input. Enter a number.");
+        mvprintw(1, 0, "Ошибка: Введите число.");
         clrtoeol();
         refresh();
-        mvprintw(0, 0, "Enter a lower integration limit: ");
+        mvprintw(0, 0, "Введите нижный придел интегрирования: ");
         clrtoeol();
         refresh();
     }
 
-    mvprintw(1, 0, "Enter the upper limit of integration: ");
+    mvprintw(1, 0, "Введите верхний придел интегрирования: ");
     while (scanw("%lf", &upper_limit) != 1) {
         // Очистка буфера до конца строки
         int ch;
         while ((ch = getch()) != '\n' && ch != EOF);
-        mvprintw(2, 0, "Error: Invalid input. Enter a number.");
+        mvprintw(2, 0, "Ошибка: Введите число.");
         clrtoeol();
         refresh();
-        mvprintw(1, 0, "Enter the upper limit of integration: ");
+        mvprintw(1, 0, "Введите верхний придел интегрирования: ");
         clrtoeol();
         refresh();
     }
 
-    mvprintw(2, 0, "Enter the integral: ");
+    mvprintw(2, 0, "Введите интеграл: ");
     clrtoeol();
     refresh();
     getstr(expression);
@@ -162,36 +162,37 @@ void save_result_to_file() {
     keypad(stdscr, TRUE);
     cursor_visibility(TRUE);
     echo();
-    attrset(COLOR_PAIR(3) | A_BOLD);
+    attrset(COLOR_PAIR(2) | A_BOLD);
 
-    mvprintw(0, 0, "Enter path to save file: ");
+    mvprintw(0, 0, "Введите путь к файлу: ");
     clrtoeol();
     refresh();
     getstr(path);
 
     fPtr = fopen(path, "w+");
     if (fPtr == NULL) {
-        mvprintw(1, 0, "Error: Cannot open file for writing!");
+        mvprintw(1, 0, "Ошибка: Файл не может быть создан!");
         wait_to_continue();
         return;
     }
-    if (strcmp(expression, "error") != 0){
+    if (strcmp(expression, "Ошибка") != 0){
         fprintf(fPtr, "Lower limit: %.2f\n", lower_limit);
         fprintf(fPtr, "Upper limit: %.2f\n", upper_limit);
         fprintf(fPtr, "Expression: %s\n", expression);
         fprintf(fPtr, "Result: %.4f\n", result);
     } else {
-        printw("ERROR!\n");
-        printw("The result was not written to the file, because there were problems with the expression!\n\n");
-        printw("Possible causes:\n");
-        printw(" - The integral was not set by the user from the beginning of the program\n");
-        printw(" - The entered expression lacks closing brackets\n");
-        printw(" - The entered expression contains an incorrect functions names\n\n");
+        printw("Критическая ошибка!\n");
+        printw("Ошибка при обработке выражения!\n\n");
+        printw("Возможные причины:\n");
+        printw(" - С момента запуска программы интеграл не был введен.\n");
+        printw(" - Во введённом выражении встретилось неожиданная функция.\n");
+        printw(" - Во введённом выражении не хватает закрывающихся скобок.\n");
+        printw("Вы всё равно можете просмотреть введённое выражение выбрав пункт Вывод интеграла на экран в главном меню\n\n");
     }
     
     fclose(fPtr);
 
-    mvprintw(2, 0, "Result saved to: %s", path);
+    mvprintw(2, 0, "Результат сохранён в: %s\n", path);
     noecho();
     cursor_visibility(FALSE);
     wait_to_continue();

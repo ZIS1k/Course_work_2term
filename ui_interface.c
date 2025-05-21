@@ -1,4 +1,4 @@
-#include <ncurses.h>
+﻿#include <ncurses.h>
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,16 +8,16 @@
 #include "ui_interface.h"
 
 menu_item_t main_menu_item[MAIN_MENU_ITEM_COUNT] = {
-    {"Integral Input", show_input_method_menu},
-    {"Integral Output", show_integral},
-    {"Show Integration Result", show_integration_result},
-    {"Save Result", save_result_to_file},
-    {"Exit", exit_program}
+    {"Ввод интеграла", show_input_method_menu},
+    {"Вывод интеграла на экран", show_integral},
+    {"Вывести результат интегрирования", show_integration_result},
+    {"Сохранить результат в файл", save_result_to_file},
+    {"Выход", exit_program}
 };
 
 menu_item_t input_method_menu_item[MAIN_MENU_ITEM_COUNT] = {
-    "Keyboard Input", keyboard_input_integral,
-    "Load from File", file_input_integral,
+    "Ручной ввод", keyboard_input_integral,
+    "Загрузить из файла", file_input_integral,
 };
 
 void cursor_visibility(bool ch) {
@@ -30,10 +30,15 @@ void initialization_ui(){
     start_color(); // включаем палитру
     keypad(stdscr, TRUE); // обработка командных клавиш
     cursor_visibility(false);
-    init_pair(1, COLOR_RED, COLOR_WHITE); // 1 цвет в палитре - красные символы на белом фоне
-    init_pair(2, COLOR_RED, COLOR_BLACK); // 2 цвет в палитре - красные символы на чёрном фоне
-    init_pair(3, COLOR_BLUE, COLOR_WHITE); // 3 цвет в палитре - синие символы на белом фоне
+
+    init_color(16, 1000, 1000, 1000); // создание самого яркого белого
+    init_pair(1, COLOR_RED, 16); // 1 цвет в палитре - красные символы на белом фоне
+    init_pair(2, COLOR_BLUE, 16); // 2 цвет в палитре - синие символы на белом фоне
+
+
     attron(COLOR_PAIR(1) | A_BOLD); // включаем пресет 1 (для стандартизации)
+    bkgd(COLOR_PAIR(1)); // светлый фон
+    clear();
 }
 
 void show_input_method_menu() {
@@ -45,15 +50,19 @@ void show_input_method_menu() {
         if (need_redraw) {
             clear();
             // Отрисовка подменю
+            attrset(COLOR_PAIR(1) | A_DIM);
+            printw("╔═════════ Меню выбора ═════════╗\n");
             for (int i = 0; i < INPUT_METHOD_MENU_ITEM_COUNT; i++) {
                 if (i == selected_point) {
                     attrset(COLOR_PAIR(1) | A_BOLD);
-                    printw(" -> %s\n", input_method_menu_item[i].item_name);
+                    printw("  ➤ %-30s\n", input_method_menu_item[i].item_name);
                 } else {
                     attrset(COLOR_PAIR(2) | A_DIM);
-                    printw("    %s\n", input_method_menu_item[i].item_name);
+                    printw("    %-30s\n", input_method_menu_item[i].item_name);
                 }
             }
+            attrset(COLOR_PAIR(1) | A_DIM);
+            printw("╚═════════ Меню выбора ═════════╝\n");
             refresh();
             need_redraw = 0;
         }
@@ -77,6 +86,7 @@ void show_input_method_menu() {
 }
 
 void show_main_menu() {
+    
     int key;
     int selected_point = 0;
     int need_redraw = 1;
@@ -85,15 +95,19 @@ void show_main_menu() {
         if (need_redraw) {
             clear();
             // Отрисовка меню
+            attrset(COLOR_PAIR(1) | A_DIM);
+            printw("╔═════════ Самое главное меню ═════════╗\n");
             for (int i = 0; i < MAIN_MENU_ITEM_COUNT; i++) {
                 if (i == selected_point) {
                     attrset(COLOR_PAIR(1) | A_BOLD);
-                    printw(" -> %s\n", main_menu_item[i].item_name);
+                    printw("  ➤ %-30s\n", main_menu_item[i].item_name);
                 } else {
                     attrset(COLOR_PAIR(2) | A_DIM);
-                    printw("    %s\n", main_menu_item[i].item_name);
+                    printw("    %-30s\n", main_menu_item[i].item_name);
                 }
             }
+            attrset(COLOR_PAIR(1) | A_DIM);
+            printw("╚═════════ Самое главное меню ═════════╝\n");
             refresh();
             need_redraw = 0;
         }
@@ -122,7 +136,8 @@ void show_main_menu() {
 }
 
 void wait_to_continue(){
-    printw("Press any key to continue");
+    attrset(COLOR_PAIR(1) | A_BOLD);
+    printw("Нажмите любую клавишу для продолжения...");
     keypad(stdscr, TRUE);
     cursor_visibility(FALSE);
     refresh();
@@ -137,38 +152,29 @@ void exit_program() {
 }
 
 void show_integral(){
-    printw("#==========================================================#\n");
-    printw("| Your integral: ,/'[%.2f, %.2f] %12s dx |\n", lower_limit, upper_limit, expression);
-    printw("#==========================================================#\n");
+    attrset(COLOR_PAIR(2) | A_BOLD);
+    printw(" %.2f\n", upper_limit);
+    printw("  ⎰ %s dx \n", expression);
+    printw(" %.2f\n", lower_limit);
     wait_to_continue();
 }
 
 void show_integration_result(){
     Integration();
+    attrset(COLOR_PAIR(2) | A_BOLD);
     if (strcmp(expression, "error") == 0) {
-        printw("ERROR!\n");
-        printw("There was an error decoding your expression!\n\n");
-        printw("Possible causes:\n");
-        printw(" - The integral was not set by the user from the beginning of the program\n");
-        printw(" - The entered expression lacks closing brackets\n");
-        printw(" - The entered expression contains an incorrect functions names\n\n");
+        printw("Критическая ошибка!\n");
+        printw("Ошибка при обработке выражения!\n\n");
+        printw("Возможные причины:\n");
+        printw(" - С момента запуска программы интеграл не был введен.\n");
+        printw(" - Во введённом выражении встретилось неожиданная функция.\n");
+        printw(" - Во введённом выражении не хватает закрывающихся скобок.\n");
+        printw("Вы всё равно можете просмотреть введённое выражение выбрав пункт Вывод интеграла на экран в главном меню\n\n");
     } else {
-        printw("#==========================================================#\n");
-        printw("| ,/'[%.2f, %.2f] %12s dx = %.4f |\n", lower_limit, upper_limit, expression, result);
-        printw("#==========================================================#\n");
+        printw(" %.2f\n", upper_limit);
+        printw("  ⎰ %s dx = %lf\n", expression, result);
+        printw(" %.2f\n", lower_limit);
     }
     
     wait_to_continue();
 }
-
-/*
-int clear();
-int getch();
-scanw();
-attron(COLOR_PAIR(1) | A_BOLD); // включаем пресет 1
-attrset(COLOR_PAIR(2) | A_DIM); // невыбранные пункты
-int insdelln(int n)// для положительного n вставляет n пустых строк для отрицательного удаляет n строк.
-int move(int y, int x)//перемещение курсора
-int deleteln() //Удаление строки
-getyx(stdscr, int y, int x)// Получение координат курсора
-*/
