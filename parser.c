@@ -9,13 +9,15 @@ jmp_buf parse_error;
 
 double parser(char** expr, double x) {
     if (!expr || !*expr || **expr == '\0') {
-        *expr = "error";
+        strncpy(*expr, "error", sizeof(expr) - 1);
+        (*expr)[sizeof(expr) - 1] = '\0';
         return 0.0;
     }
     if (setjmp(parse_error) == 0) {
         return parse_additive(expr, x);
     } else {
-        *expr = "error";
+        strncpy(*expr, "error", sizeof(expr) - 1);
+        (*expr)[sizeof(expr) - 1] = '\0';
         return 0.0;
     }
 }
